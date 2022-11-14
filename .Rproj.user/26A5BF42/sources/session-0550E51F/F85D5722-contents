@@ -1,0 +1,151 @@
+###Tarea N°3 
+
+##Cargar paquetes. 
+
+pacman::p_load(tidyverse,
+               sjmisc,
+               srvyr,
+               survey,
+               dplyr,
+               haven,
+               forcats,
+               car,
+               sjPlot)
+
+### Cargar Datos.
+
+Soc_19<- read_dta("input/Data/ELSOC_Wide_2016_2019_v1.00_Stata14.dta")
+
+view(Soc_19)
+frq
+
+#Limpieza de Datos. 
+sjPlot::view_df(Soc_19)
+
+#Lamina 44.
+find_var(Soc_19, "valora")
+
+#Lamina 45.
+find_var(Soc_19, "Frecuencia")
+
+#Lamina 53.
+find_var(Soc_19, "Desigualdad")
+
+#Lamina 58. 
+find_var(Soc_19, "partidaria")
+
+#Lamina 74.
+find_var(Soc_19, "c18")
+
+#Selección  y filtración de variables. 
+
+proc_soc19 <- Soc_19 %>% 
+  select(idencuesta, tipo_atricion,  c20_w03, c20_otro_w03, c20_w04, c20_otro_w04,
+         c22_w01, c22_w02, c22_w03, c22_w04, 
+         c41_01_w04, c41_02_w04,
+         c16_w01, c16_otro_w01, c16_w02, c16_otro_w02, c16_w03, c16_otro_w03, c16_w04, c16_otro_w04, 
+         c18_04_w01, c18_04_w02, c18_04_w03, c18_04_w04, c18_05_w01, c18_05_w02, c18_05_w03, c18_05_w04, 
+         c18_06_w01, c18_06_w02, c18_06_w03, c18_06_w04, c18_07_w01, c18_07_w02, c18_07_w03, c18_07_w04,
+         ponderador01_w01, ponderador01_w02, ponderador01_w03, ponderador01_w04, fact_exp01_w01, fact_exp01_w02, fact_exp01_w03, fact_exp01_w04)
+
+#Lamina 44
+
+lamina44<- Soc_19 %>% 
+  select(c20_w03, c20_otro_w03, c20_w04, c20_otro_w04, ponderador01_w03, ponderador01_w04, fact_exp01_w03, fact_exp01_w04)
+head(proc_soc19)
+
+lamina44 %>% #Especificamos que trabajaremos con el dataframe datos
+  rowwise() %>% #Especificamos que agruparemos por filas
+  mutate(mov.social18 = c20_w03/c20_otro_w03/c20_w04/c20_otro_w04) %>% #Creamos una nueva variable llamada ing_tot, sumando los valores de ss_t, svar_t y reg_t para cada fila 
+  ungroup() # Desagrupamos (dejamos de trabajar en razón de filas)
+
+Proc_soc16 <- Soc_19 %>% 
+  select(idencuesta, tipo_atricion, annio_entr_w01, c16_w01, c16_otro_w01, 
+         c18_04_w01, c18_05_w01, c18_06_w01, c18_07_w01, c22_w01, fact_exp01_w01, 
+         ponderador01_w01)
+
+Proc_soc17 <- Soc_19 %>% 
+  select(idencuesta, tipo_atricion, annio_entr_w02, c16_w01, c16_otro_w01, 
+         c16_otro_w02, c18_04_w02, c22_w02, c18_04_w02, c18_05_w02, c18_06_w02, 
+         c18_07_w02, ponderador01_w02, fact_exp01_w02)
+
+Proc_soc18<-  Soc_19 %>% 
+  select(idencuesta, tipo_atricion, annio_entr_w03, c20_w01,c20_w03, c20_otro_w03, 
+         c22_w03, c16_w03, c16_otro_w03, c18_04_w03, c18_05_w03, c18_06_w03, 
+         c18_07_w03, ponderador01_w03, fact_exp01_w03)
+
+Proc_elsoc19<- Soc_19 %>% 
+  select( idencuesta, tipo_atricion, annio_entr_w04, c20_w04, c20_otro_w04, 
+          c41_01_w04, c41_02_w04, c16_w04, c18_04_w04, c18_05_w04, c18_06_w04, 
+          c18_07_w04, ponderador01_w04, fact_exp01_w04)
+
+
+merge_18_19 <- merge(Proc_soc18, Proc_elsoc19, 
+                     by= c ("idencuesta"),
+                     all = T)
+
+Lamina_44 <- merge_18_19 %>% 
+  select(c20_w03, c20_otro_w03, c20_w04, c20_otro_w04)
+
+#Grafico
+
+plot_grpfrq(merge_18_19$c20_w03, merge_18_19$c20_w04, 
+            type = "bar", title = "prueba", 
+            geom.colors = "violeta")
+
+lamina45<- Soc_19 %>% 
+  select(idencuesta, tipo_atricion,  c20_w03, c20_otro_w03, c20_w04, c20_otro_w04,
+c22_w01, c22_w02, c22_w03, c22_w04, 
+c41_01_w04, c41_02_w04,
+c16_w01, c16_otro_w01, c16_w02, c16_otro_w02, c16_w03, c16_otro_w03, c16_w04, c16_otro_w04, 
+c18_04_w01, c18_04_w02, c18_04_w03, c18_04_w04, c18_05_w01, c18_05_w02, c18_05_w03, c18_05_w04, 
+c18_06_w01, c18_06_w02, c18_06_w03, c18_06_w04, c18_07_w01, c18_07_w02, c18_07_w03, c18_07_w04,
+ponderador01_w01, ponderador01_w02, ponderador01_w03, ponderador01_w04, fact_exp01_w01, fact_exp01_w02, fact_exp01_w03, fact_exp01_w04)
+
+#grafico 
+plot_frq(lamina45, c22_w01, c22_w02, c22_w03, c22_w04, 
+         title = "Frecuencia de participación en mov. sociales",
+         type = "bar")
+#Lamina 53
+
+plot_xtab(Proc_elsoc19$c41_01_w04, Proc_elsoc19$c41_02_w04, margin = "row",
+          bar.pos = "stack", 
+          title = "9 Frecuencia departicipaciónen movimientosocial (2019),segúnrabiahacianivelde
+desigualdadycostodelavidaenChile")
+
+#Lamina 58
+lamina58<- Soc_19 %>% 
+  select(idencuesta, tipo_atricion,  c20_w03, c20_otro_w03, c20_w04, c20_otro_w04,
+         c22_w01, c22_w02, c22_w03, c22_w04, 
+         c41_01_w04, c41_02_w04,
+         c16_w01, c16_otro_w01, c16_w02, c16_otro_w02, c16_w03, c16_otro_w03, c16_w04, c16_otro_w04, 
+         c18_04_w01, c18_04_w02, c18_04_w03, c18_04_w04, c18_05_w01, c18_05_w02, c18_05_w03, c18_05_w04, 
+         c18_06_w01, c18_06_w02, c18_06_w03, c18_06_w04, c18_07_w01, c18_07_w02, c18_07_w03, c18_07_w04,
+         ponderador01_w01, ponderador01_w02, ponderador01_w03, ponderador01_w04, fact_exp01_w01, fact_exp01_w02, fact_exp01_w03, fact_exp01_w04)
+
+plot_frq(lamina58, c16_w01, c16_otro_w01, c16_w02, c16_otro_w02, 
+         c16_w03, c16_otro_w03, c16_w04, c16_otro_w04, 
+         title = "Cuáldelossiguientespartidospolíticosrepresenta mejorsusintereses, creenciasyvalores?
+Según Ola del Estudio", 
+         type = "bar")
+
+#Lamina 74
+
+lamina74<- Soc_19 %>% 
+  select(idencuesta, tipo_atricion,  c20_w03, c20_otro_w03, c20_w04, c20_otro_w04,
+         c22_w01, c22_w02, c22_w03, c22_w04, 
+         c41_01_w04, c41_02_w04,
+         c16_w01, c16_otro_w01, c16_w02, c16_otro_w02, c16_w03, c16_otro_w03, c16_w04, c16_otro_w04, 
+         c18_04_w01, c18_04_w02, c18_04_w03, c18_04_w04, c18_05_w01, c18_05_w02, c18_05_w03, c18_05_w04, 
+         c18_06_w01, c18_06_w02, c18_06_w03, c18_06_w04, c18_07_w01, c18_07_w02, c18_07_w03, c18_07_w04,
+         ponderador01_w01, ponderador01_w02, ponderador01_w03, ponderador01_w04, fact_exp01_w01, fact_exp01_w02, fact_exp01_w03, fact_exp01_w04)
+
+plot_frq( lamina74, c18_04_w01,c18_04_w02,c18_04_w03, c18_04_w04, c18_05_w01, 
+          c18_05_w02, c18_05_w03, c18_05_w04, c18_06_w01,
+          c18_06_w02, c18_06_w03, c18_06_w04, c18_07_w01,
+          c18_07_w02, c18_07_w03, c18_07_w04,
+         title = "Grado de acuerdo con las siguientes afirmaciones", 
+         type = "bar")
+
+save(lamina44, merge_18_19, proc_soc19, Proc_elsoc19, Proc_soc16, Proc_soc17, 
+     Proc_soc18, lamina45, lamina58, lamina74, Lamina_44, Proc_elsoc19, file = "output/DATA/datos_proc.RData")
