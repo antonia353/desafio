@@ -1,0 +1,76 @@
+#Carga de libreria
+pacman::p_load(tidyverse,
+               haven,
+               dplyr, 
+               car,
+               sjmisc,
+               sjlabelled,
+               sjPlot)
+
+#Carga de datos. 
+Datos19<- read_dta("input/data/ene-2019-11-ond.dta")
+
+Datos21<- read_dta("input/data/ene-2021-11-ond.dta")
+
+view(Datos19)
+view(Datos21)
+
+#proceso de datos 2019.
+Datos_proc19<- Datos19 %>% filter(edad>=15) %>%
+  mutate(tramo_edad = case_when(edad <=39 ~  "15 a 39 años",
+                                edad > 39 & edad <= 64 ~ "40 a 64 años",
+                                edad > 64 ~ "64 o más",
+                                TRUE ~ NA_character_)) %>%
+  mutate(termino_nivel = as.character(.$termino_nivel)) %>% 
+  mutate(termino_nivel = car::recode(.$termino_nivel, c("1 = 'si' ; 2 = 'no'"))) %>% 
+  mutate(cine = case_when(termino_nivel== "no" & cine <=4 ~ "Basica o menos incompleta",
+                          termino_nivel== "si" & (cine >= 3 & cine <=5)~"Media y basica completa",
+                          termino_nivel== "si" & cine>5 ~ "Superior Completa",
+                          TRUE~NA_character_)) %>%
+  mutate(sexo = as.character(.$sexo)) %>%
+  mutate(sexo = car::recode(.$sexo, c("1 = 'Hombre'; 2 = 'Mujer'"))) %>%
+  rowwise( c2_1_1, c2_1_3, c3_1, c3_3) %>%
+  mutate(suma_horas = sum(c2_1_1, c2_1_3, c3_1, c3_3, na.rm = T)) %>%
+  ungroup()%>%
+  select(id_identificacion, idrph,ano_encuesta,edad,tramo_edad,sexo,cine,termino_nivel, cae_general,
+         cae_especifico, activ, c2_1_1, c2_1_3,
+         c3_1, c3_3, suma_horas)
+nrow(na.omit (Datos_proc19))
+
+#procesamiento de datos 2021  
+Datos_proc21<- Datos21 %>% filter(edad>=15) %>%
+  mutate(tramo_edad = case_when(edad <=39 ~  "de 15 a 39 años",
+                                edad > 39 & edad <= 64 ~ "40 a 64 años",
+                                edad > 64 ~ " 65 o más",
+                                TRUE ~ NA_character_)) %>%
+  mutate(termino_nivel = as.character(.$termino_nivel)) %>% 
+  mutate(termino_nivel = car::recode(.$termino_nivel, c("1 = 'si' ; 2 = 'no'"))) %>% 
+  mutate(cine = case_when(termino_nivel== "no" & cine <=4 ~ "Basica o menos incompleta",
+                          termino_nivel== "si" & (cine >= 3 & cine <=5)~"Media y basica completa",
+                          termino_nivel== "si" & cine>5 ~ "Superior Completa",
+                          TRUE~NA_character_)) %>%
+  mutate(sexo = as.character(.$sexo)) %>%
+  mutate(sexo = car::recode(.$sexo, c("1 = 'Hombre'; 2 = 'Mujer'"))) %>%
+  rowwise( c2_1_1, c2_1_3, c3_1, c3_3) %>%
+  mutate(suma_horas = sum(c2_1_1, c2_1_3, c3_1, c3_3,turno_cont_h,turno_t, turno_cont_d,turno_cont_t, na.rm = T)) %>%
+  ungroup()%>%
+  select(id_identificacion,idrph,ano_encuesta,edad,tramo_edad,sexo,cine,termino_nivel, cae_general,
+         cae_especifico, activ, c2_1_1, c2_1_3,
+         c3_1, c3_3,turno_h,turno_d,turno_cont_h,turno_cont_t, suma_horas)
+nrow(na.omit(Datos_proc21))
+
+###unión de datos procesados
+ene_unida<- bind_rows(Datos_proc19, Datos_proc21)
+
+###Guardado
+save(Datos_proc19,Datos_proc21, ene_unida, file = "output/Data/datos_proc.RData")
+  
+ 
+  
+  
+  
+  
+  
+  
+  
+  

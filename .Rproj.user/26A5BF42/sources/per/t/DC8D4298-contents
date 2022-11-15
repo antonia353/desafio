@@ -1,0 +1,219 @@
+
+# 9: Muestras complejas y precisión de inferencia estadística ---------------------------------------------------------------------
+
+
+
+# 1. Cargar librerías --------------------------------------------------------
+
+pacman::p_load(tidyverse,
+               sjmisc,
+               srvyr,
+               survey,
+               dplyr)
+
+# 2. Cargar datos ------------------------------------------------------------
+
+data <- readRDS("input/data/casen_proc.rds")
+
+# 3. Explorar -------------------------------------------------------------
+
+dim(data)
+head(data)
+
+frq(data$region)
+frq(data$pobreza)
+frq(data$sexo)
+
+descr(data$exp) #Ponderador regional
+sum(data$exp) #Total de la población
+descr(data$varstrat) #Estrato de varianza
+descr(data$varunit) #Conglomerado de varianza
+descr(data$ing_tot_hog)
+
+
+# 4. La función group_by()  --------------------------------------------------
+#calculo muestral
+data %>% 
+  group_by(sexo) %>% #Espeficicamos que agruparemos por sexo
+  summarise(media = mean(ing_tot_hog),
+n=n ()) %>% 
+  mutate(prop = n/sum(n)*100)
+
+#Creamos una columna llamada media, calculando la media ingresos con la función `mean`
+#media muestral del ingreso total del hogar 
+#para entender que es lo que esta haciendo el survey
+## Interacción con sjmisc --------------------------------------------------
+
+data %>% 
+  group_by(sexo) %>% 
+  frq(pobreza)
+
+
+data %>% 
+  group_by(sexo) %>% 
+  descr(ing_tot_hog)
+
+
+# 5. Creación de objeto encuesta ---------------------------------------------
+
+#Crear variables de tamaño de estratos para corregir por población finita (opcional)
+data <- data %>% 
+  group_by(varstrat) %>% #Agrupando por varstrat
+  mutate(stratn = sum(exp)) %>%  #Calculamos el total de personas por estrato
+  ungroup() #desagrupamos
+
+#Crear objeto encuesta con as_survey_design de srvyr
+
+casen_regional <- data %>% #Creamos un nuevo objeto llamado casen_regional con la información de data
+  as_survey_design(ids = varunit, #Aplicamos diseño muestral, especificando los ids a partir de varunit,
+                   strata = varstrat,#los estratos a partir de varstrat,
+                   fpc = stratn, #especificando que la estimación es con una población finita
+                   weights = exp) #y los ponderadores con exp
+
+# Cálculo de medias ----------------------------------------------------
+
+#Ver diferencias entre data y objeto encuesta
+
+casen_regional %>% #Con casen_regional
+  summarise(ing_medio = survey_mean(ing_tot_hog, na.rm=T)) #Calculamos el ingreso medio poblacional
+
+
+
+data %>% #Con data
+  summarise(ing_medio = mean(ing_tot_hog, na.rm=T)) #Calculamos el ingreso medio poblacional
+
+
+## Incorporar Intervalos de confianza -----------------------------------
+
+casen_regional %>%#Con casen_regional
+  summarise(ing_medio = survey_mean(ing_tot_hog, vartype = "ci", na.rm=T)) #Calculamos el ingreso medio poblacional, y sus intervalos de confianza
+
+
+#Comprar 95% y 99%
+casen_regional %>% #Con casen_regional
+  summarise(ing_medio95 = survey_mean(ing_tot_hog, vartype = "ci", level = .95, na.rm=T), #Al 95%
+            ing_medio99 = survey_mean(ing_tot_hog, vartype = "ci", level = .99, na.rm=T)) #Al 99%
+
+
+#Agrupar por variable categórica (sexo)
+casen_regional %>% #Con casen_regional
+  group_by(sexo) %>% #Agrupamos por sexo
+  summarise(ing_medio = survey_mean(ing_tot_hog, vartype = "ci", na.rm=T)) #Calculamos el ingreso medio poblacional, y sus intervalos de confianza
+
+#por Región
+casen_regional %>% #Con casen_regional
+  group_by(region) %>% #Agrupamos por region
+  summarise(ing_medio = survey_mean(ing_tot_hog, vartype = "ci", na.rm=T)) #Calculamos el ingreso medio poblacional, y sus intervalos de confianza
+
+
+## Generar tabla -----------------------------------------------------------
+
+ing_pobreza <- casen_regional %>% 
+  group_by(pobreza) %>% 
+  summarise(ing_medio = survey_mean(ing_tot_hog, vartype = "ci", na.rm = T)) %>% 
+  ungroup()  
+
+ing_pobreza_p <- ing_pobreza %>% 
+  mutate('Pobres extremos' = c(.$ing_medio[1], .$ing_medio_low[1], .$ing_medio_upp[1]), # Extraemos los valores correspondientes a la primera fila en cada una de nuestras variables
+         'Pobres no extremos' = c(.$ing_medio[2], .$ing_medio_low[2], .$ing_medio_upp[2]), # Extraemos los valores correspondientes a la segunda fila en cada una de nuestras variables
+         'No pobres' = c(.$ing_medio[3], .$ing_medio_low[3], .$ing_medio_upp[3])) %>% # Extraemos los valores correspondientes a la tercera fila en cada una de nuestras variables
+  select('Pobres extremos', 'Pobres no extremos', 'No pobres')
+
+head(ing_pobreza_p) #Visualizamos
+
+# Cálculo de frecuencias --------------------------------------------------
+
+#¡Así no!
+casen_regional %>% #Con casen_regional
+  summarise(prop = survey_prop(pobreza, na.rm = T)) #Y calculamos las proporciones
+
+#Debemos agrupar
+casen_regional %>% #Con casen_regional
+  group_by(pobreza) %>% #Agrupamos por pobreza
+  summarise(prop = survey_prop(na.rm = T)) #Y calculamos las proporciones
+
+#survey_mean() también sirve
+
+casen_regional %>% #Con casen_regional
+  group_by(pobreza) %>% #Agrupamos por pobreza
+  summarise(prop = survey_mean(na.rm = T)) #Y calculamos las proporciones
+
+#Estimamos porcentajes con mutate()
+casen_regional %>% #Con casen_regional
+  group_by(pobreza) %>% #Agrupamos por pobreza
+  summarise(prop = survey_prop(na.rm = T))%>% #Calculamos las proporciones
+  mutate(per = paste0(round(prop*100,2), "%")) #Creamos una nueva columna multiplicando las proporciones *100 para obtener porcentajes
+
+
+#survey_total() para estimar totales
+casen_regional %>% #Con casen_regional
+  group_by(pobreza) %>% #Agrupamos por pobreza
+  summarise(prop = survey_prop(na.rm = T), #Calculamos las proporciones
+            total = survey_total(na.rm=T))%>% #Y el total por categorías
+  mutate(per = prop*100) #Creamos una nueva columna multiplicando las proporciones *100 para obtener porcentajes
+
+
+#Incorporamos intervalos de confianza
+
+casen_regional %>% #Con casen_regional
+  group_by(pobreza) %>% #Agrupamos por pobreza
+  summarise(prop = survey_prop(vartype = "ci", na.rm = T)) #Incorporamos intervalos de confianza
+
+#Transformamos los límites de los intervalos en porcentajes
+casen_regional %>% #Con casen_regional
+  group_by(pobreza) %>% #Agrupamos por pobreza
+  summarise(prop = survey_prop(vartype = "ci", na.rm = T)) %>% #Incorporamos intervalos de confianza
+  mutate(prop = prop*100, #Multiplicamos las proporciones *100,
+         prop_low = prop_low*100, #así como el límite inferior 
+         prop_upp = prop_upp*100) #y superior, para obtener porcentajes
+
+#Incluir el total
+casen_regional %>% #Con casen_regional
+  group_by(pobreza) %>% #Agrupamos por pobreza
+  summarise(prop = survey_prop(vartype = "ci", na.rm = T), #Calculamos las proporciones con intervalos de confianza
+            total = survey_total(vartype = "ci", na.rm=T)) %>% #Así como el total por categoría
+  mutate(prop = prop*100, #Multiplicamos las proporciones *100,
+         prop_low = prop_low*100, #así como el límite inferior 
+         prop_upp = prop_upp*100) #y superior, para obtener porcentajes
+
+#Agrupar dos variables categóricas
+casen_regional %>% #Creamos un objeto llamado pobreza_reg con datos de casen_regional
+  group_by(pobreza, sexo) %>% #Agrupamos por pobreza y sexo
+  summarise(prop = survey_prop(vartype = "ci", na.rm = T), #Calculamos las proporciones con intervalos de confianza
+            total = survey_total(vartype = "ci", na.rm=T)) %>% #Así como el total por categoría
+  mutate(prop = prop*100)
+
+
+
+## Generar tabla -----------------------------------------------------------
+
+pobreza_sexo <- casen_regional %>% #Creamos un objeto llamado pobreza_reg con datos de casen_regional
+  group_by(sexo, pobreza) %>% #Agrupamos por region y pobreza
+  summarise(prop = survey_prop(vartype = "ci", na.rm = T), #Calculamos las proporciones con intervalos de confianza
+            total = survey_total(vartype = "ci", na.rm=T)) %>% #Así como el total por categoría
+  mutate(per = prop*100) %>%  #Multiplicamos las proporciones *100 para obtener porcentajes
+  ungroup() #desagrupamos
+
+# ¡Extraigamos los valores que nos interesan!
+
+pobreza_sexo_p <- pobreza_sexo %>% 
+  mutate(sexo = c('Hombre', 'Mujer', 0, 0, 0, 0), #Dejamos en el orden deseado y rellenamos con 0 
+         'Pobres extremos' = c(.$per[1], .$per[4], 0, 0, 0, 0), # Seleccionamos los valores que nos interesan y rellenamos con 0 
+         'Pobres no extremos' = c(.$per[2], .$per[5], 0, 0, 0, 0), # Seleccionamos los valores que nos interesan y rellenamos con 0 
+         'No pobres' = c(.$per[3], .$per[6], 0, 0, 0, 0)) %>%  # Seleccionamos los valores que nos interesan y rellenamos con 0 
+  select(-c(pobreza, starts_with('prop'), starts_with('total'), per)) %>%  #Seleccionamos sólo las variables que nos interesan
+  filter(sexo != 0) # Filtramos todas las filas con 0 de relleno
+
+head(pobreza_sexo_p)
+
+
+#cosa nueva que no estaba 
+pobreza_sexo %>% 
+  mutate_if(is.numeric, list(~round(.,2))) %>% 
+  unite(col ="prop", c("prop_low", "prop", "prop_upp"), sep = "-") %>% 
+  unite(col ="total", c("total_low", "total", "total_upp"), sep = "-")
+
+  
+
+
+

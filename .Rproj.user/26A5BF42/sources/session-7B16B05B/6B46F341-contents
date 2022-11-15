@@ -37,5 +37,7 @@ Macrozona<-Data %>%
 Objeto_encuesta <- Macrozona %>%
   as_survey_design(ids = Enc_rph, 
                    weights= Factor_EME)
+
+
   
 

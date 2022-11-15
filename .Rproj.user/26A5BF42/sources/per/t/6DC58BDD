@@ -1,26 +1,26 @@
 {
-    "id": "46711F9A",
-    "path": "~/Intro a R/clases/taller_descriptivos/R/muestreo.R",
+    "id": "6DC58BDD",
+    "path": "~/Intro a R/clases/taller_descriptivos/R/bivariado.R",
     "project_path": null,
     "type": "r_source",
-    "hash": "0",
+    "hash": "1823222590",
     "contents": "",
     "dirty": false,
-    "created": 1668466635113.0,
+    "created": 1668478246193.0,
     "source_on_save": false,
-    "relative_order": 3,
+    "relative_order": 4,
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "179,27",
-        "scrollLine": "160"
+        "cursorPosition": "184,0",
+        "scrollLine": "165"
     },
     "folds": "",
-    "lastKnownWriteTime": 1653862814,
+    "lastKnownWriteTime": 1653849508,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1653862814,
+    "last_content_update": 1653849508,
     "read_only": false,
     "read_only_alternatives": []
 }

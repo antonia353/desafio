@@ -1,26 +1,26 @@
 {
-    "id": "96B59E70",
-    "path": "~/Intro a R/00-tarea-antonia353/Tarea-03/01-proc.R",
+    "id": "24A03EAB",
+    "path": "~/Intro a R/clases/taller_descriptivos/R/muestreo.R",
     "project_path": null,
     "type": "r_source",
-    "hash": "0",
+    "hash": "1023000514",
     "contents": "",
     "dirty": false,
-    "created": 1668467081949.0,
+    "created": 1668478249959.0,
     "source_on_save": false,
     "relative_order": 5,
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "48,9",
-        "scrollLine": "41"
+        "cursorPosition": "167,0",
+        "scrollLine": "160"
     },
     "folds": "",
-    "lastKnownWriteTime": 1668232255,
+    "lastKnownWriteTime": 1653862814,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1668232255,
+    "last_content_update": 1653862814,
     "read_only": false,
     "read_only_alternatives": []
 }

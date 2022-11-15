@@ -26,16 +26,29 @@ Macrozona<-Data %>%
                                    region %in% c(4, 5, 6, 7, 8, 16) ~ "Macrozona Central",
                                    region %in% c(9, 14, 10)~ "Macrozona sur",
                                    region %in% c(11, 12)~ "Macrozona Austral",
-                                   TRUE ~ NA_character_),)
+                                   TRUE ~ NA_character_),) %>% 
+  
+  mutate(CISE = case_when(CISE %in% c(0)~"Cuenta propia",
+                          CISE %in% c(1) ~ "Empleador",
+                          TRUE ~ NA_character_)) %>% 
+
 
   
 
-  view(Macrozona)
+view(Macrozona)
   
   
   
 Objeto_encuesta <- Macrozona %>%
   as_survey_design(ids = Enc_rph, 
                    weights= Factor_EME)
+
+mean(Macrozona$ganancia_final_mensual,na.rm = TRUE)
+mean(Macrozona$CISE, na.rm = TRUE)
+
+##Tabla 
+
+  
+
   
 
